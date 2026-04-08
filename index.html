@@ -14,8 +14,12 @@
 html,body{height:100%;overflow:hidden}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4ff;color:#1a1a2e;display:flex;flex-direction:column}
 :root{--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);--blue:#1565c0;--blue-dark:#0d47a1;--blue-light:#e3f2fd;--blue-mid:#1976d2}
-.header{background:var(--blue);color:#fff;padding:calc(12px + var(--sat)) 16px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;box-shadow:0 2px 10px rgba(21,101,192,.35)}
-.header h1{font-size:17px;font-weight:700;letter-spacing:.2px}
+.header{background:var(--blue);color:#fff;padding:calc(10px + var(--sat)) 14px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;box-shadow:0 2px 10px rgba(21,101,192,.35)}
+.header-left{display:flex;align-items:center;gap:10px}
+.header-logo{width:38px;height:38px;border-radius:50%;border:2px solid rgba(255,255,255,.5);object-fit:cover;flex-shrink:0}
+.header-titles{display:flex;flex-direction:column}
+.header-titles h1{font-size:15px;font-weight:700;line-height:1.2}
+.header-titles span{font-size:10px;opacity:.75;letter-spacing:.3px}
 .hbtn{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);color:#fff;padding:6px 13px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer}
 .hbtn.active{background:#fff;color:var(--blue)}
 .screen{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px calc(24px + var(--sab))}
@@ -69,22 +73,30 @@ tr.active-row td{background:#e8f4fd}
 .result-title{font-size:20px;font-weight:800;color:var(--blue);margin-bottom:6px}
 .motm-banner{background:linear-gradient(135deg,#fffde7,#fff9c4);border-radius:12px;padding:12px 16px;margin-top:8px;display:flex;align-items:center;gap:10px}
 .motm-banner .star{font-size:28px}
-.motm-banner .info{flex:1}
-.motm-banner .mtitle{font-size:11px;font-weight:700;color:#f9a825;text-transform:uppercase;letter-spacing:.5px}
-.motm-banner .mplayer{font-size:16px;font-weight:800;color:#333}
-.motm-banner .mteam{font-size:12px;color:#888}
+.motm-banner .info .mtitle{font-size:11px;font-weight:700;color:#f9a825;text-transform:uppercase;letter-spacing:.5px}
+.motm-banner .info .mplayer{font-size:16px;font-weight:800;color:#333}
+.motm-banner .info .mteam{font-size:12px;color:#888}
 .tab-bar{display:flex;border-radius:10px;overflow:hidden;border:1.5px solid #c5d8f8;margin-bottom:16px}
 .tab-bar button{flex:1;padding:9px 0;font-size:13px;font-weight:600;background:#f0f4ff;border:none;color:#7090c0;cursor:pointer;border-right:1px solid #c5d8f8}
 .tab-bar button:last-child{border-right:none}
 .tab-bar button.active{background:var(--blue);color:#fff}
 select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%231565c0' d='M6 8L0 0h12z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
-.hero-card{background:linear-gradient(135deg,var(--blue),#1e88e5);color:#fff;border-radius:16px;padding:22px 20px;margin-bottom:16px}
+.hero-card{background:linear-gradient(135deg,var(--blue),#1e88e5);color:#fff;border-radius:16px;padding:22px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px}
+.hero-logo{width:64px;height:64px;border-radius:50%;border:3px solid rgba(255,255,255,.6);object-fit:cover;flex-shrink:0}
+.hero-text .title{font-size:22px;font-weight:800;margin-bottom:3px}
+.hero-text .sub{font-size:13px;opacity:.85}
 </style>
 </head>
 <body>
 
 <div class="header">
-  <h1>🏏 SJCC Score Book</h1>
+  <div class="header-left">
+    <img class="header-logo" id="header-logo-img" src="" alt="SJCC"/>
+    <div class="header-titles">
+      <h1>SJCC Score Book</h1>
+      <span>South Jersey Cricket Club</span>
+    </div>
+  </div>
   <div style="display:flex;gap:6px">
     <button class="hbtn active" id="nav-home" onclick="showView('home')">Home</button>
     <button class="hbtn" id="nav-history" onclick="showView('history')">History</button>
@@ -156,28 +168,19 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <div class="sheet-handle"></div>
     <h3>🎯 Select Bowler</h3>
     <div class="sub">Choose the bowler for the next over</div>
-    <div class="form-group">
-      <label>Bowler</label>
-      <select id="bowler-sel"></select>
-    </div>
+    <div class="form-group"><label>Bowler</label><select id="bowler-sel"></select></div>
     <button class="btn-primary btn-block" onclick="confirmBowlerChange()">Confirm Bowler</button>
   </div>
 </div>
 
 <!-- Change Batter Sheet -->
 <div class="overlay" id="change-batter-modal" style="display:none" onclick="if(event.target===this)closeChangeBatter()">
-  <div class="sheet" id="change-batter-sheet">
+  <div class="sheet">
     <div class="sheet-handle"></div>
     <h3>⇄ Change Batter</h3>
     <div class="sub">Swap a batter with someone from the bench</div>
-    <div class="form-group">
-      <label>Batter to replace</label>
-      <select id="cb-out-sel"></select>
-    </div>
-    <div class="form-group">
-      <label>New batter coming in</label>
-      <select id="cb-in-sel"></select>
-    </div>
+    <div class="form-group"><label>Batter to replace</label><select id="cb-out-sel"></select></div>
+    <div class="form-group"><label>New batter coming in</label><select id="cb-in-sel"></select></div>
     <div class="btn-group">
       <button class="btn-primary btn-sm" style="flex:1;padding:12px" onclick="confirmChangeBatter()">✓ Confirm</button>
       <button class="btn btn-sm" onclick="closeChangeBatter()">Cancel</button>
@@ -196,8 +199,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       <button onclick="setAddRole('bowl',this)">🎯 Bowler</button>
       <button onclick="setAddRole('all',this)">⚡ All-rounder</button>
     </div>
-    <div class="form-group">
-      <label>Player Name</label>
+    <div class="form-group"><label>Player Name</label>
       <input type="text" id="new-player-name" placeholder="Enter name..." onkeydown="if(event.key==='Enter')confirmAddPlayer()">
     </div>
     <div class="btn-group">
@@ -213,16 +215,9 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <div class="sheet-handle"></div>
     <h3>🌟 Man of the Match</h3>
     <div class="sub">Select the standout player of the match</div>
-    <div class="form-group">
-      <label>Team</label>
-      <select id="motm-team" onchange="refreshMotmPlayers()"></select>
-    </div>
-    <div class="form-group">
-      <label>Player</label>
-      <select id="motm-player"></select>
-    </div>
-    <div class="form-group">
-      <label>Reason (optional)</label>
+    <div class="form-group"><label>Team</label><select id="motm-team" onchange="refreshMotmPlayers()"></select></div>
+    <div class="form-group"><label>Player</label><select id="motm-player"></select></div>
+    <div class="form-group"><label>Reason (optional)</label>
       <textarea id="motm-reason" rows="2" placeholder="e.g. Outstanding batting performance..." style="resize:none"></textarea>
     </div>
     <div class="btn-group">
@@ -232,7 +227,36 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   </div>
 </div>
 
+<!-- Change Overs Sheet -->
+<div class="overlay" id="overs-modal" style="display:none" onclick="if(event.target===this)closeOversModal()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>⚙️ Change Overs</h3>
+    <div class="sub">Updates overs for both innings</div>
+    <div class="form-group"><label>Total Overs per Innings</label>
+      <input type="number" id="overs-input" min="1" max="50" style="font-size:22px;font-weight:700;text-align:center">
+    </div>
+    <div class="btn-group">
+      <button class="btn-primary btn-sm" style="flex:1;padding:12px" onclick="confirmOversChange()">✓ Confirm</button>
+      <button class="btn btn-sm" onclick="closeOversModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script>
+// ── Logo (embed from uploaded image) ──
+var LOGO_B64 = "";
+// Attempt to load logo from page context (user uploaded)
+(function(){
+  // We'll use a canvas trick to load any pasted img if available
+  // Otherwise fallback to emoji shield
+})();
+
+function setLogo(src){
+  var h=document.getElementById('header-logo-img');
+  if(h) h.src=src;
+}
+
 var state={view:'home',season:[],match:null,selected:null,
   setup:{step:0,team1Name:'Team A',team2Name:'Team B',matchDate:today(),overs:20,team1Players:[],team2Players:[],tossWinner:0,tossChoice:'bat'},
   delivery:{runs:0,extra:'',wicket:false},
@@ -242,7 +266,6 @@ var state={view:'home',season:[],match:null,selected:null,
 function today(){var d=new Date();return d.toISOString().split('T')[0]}
 var pid=0;
 function mkPlayer(name,role){return{id:pid++,name,role:role||'bat',runs:0,balls:0,fours:0,sixes:0,out:false,dismissal:''}}
-function mkBowler(name,role){return{id:pid++,name,role:role||'bowl',overs:0,balls:0,runs:0,wickets:0,wides:0,noBalls:0}}
 function initTeam(name,players){
   var ps=players.map(p=>({id:pid++,name:p.name,role:p.role,runs:0,balls:0,fours:0,sixes:0,out:false,dismissal:''}));
   var bs=players.map(p=>({id:pid++,name:p.name,role:p.role,overs:0,balls:0,runs:0,wickets:0,wides:0,noBalls:0}));
@@ -258,7 +281,21 @@ function roleBadge(r){
     '<span style="font-size:10px;padding:2px 6px;border-radius:5px;background:#e8f5e9;color:#2e7d32;font-weight:700">BAT</span>';
 }
 
-/* routing */
+// ── Logo upload handling ──
+function handleLogoFile(file){
+  if(!file||!file.type.startsWith('image/'))return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    LOGO_B64=e.target.result;
+    setLogo(LOGO_B64);
+    // update hero too
+    var hi=document.getElementById('hero-logo-img');
+    if(hi)hi.src=LOGO_B64;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── routing ──
 function showView(v){
   state.view=v;
   ['home','history'].forEach(n=>{var e=document.getElementById('nav-'+n);if(e)e.classList.toggle('active',n===v)});
@@ -273,10 +310,16 @@ function render(){
   else if(state.view==='match')a.innerHTML=renderMatch();
   else if(state.view==='squad')a.innerHTML=renderSquad();
   a.scrollTop=0;
+  // re-apply logo after render
+  if(LOGO_B64){setLogo(LOGO_B64);var hi=document.getElementById('hero-logo-img');if(hi)hi.src=LOGO_B64;}
 }
 
-/* HOME */
+// ── HOME ──
 function renderHome(){
+  var logoSrc=LOGO_B64||'';
+  var logoHtml=logoSrc
+    ?`<img id="hero-logo-img" class="hero-logo" src="${logoSrc}" alt="SJCC"/>`
+    :`<div id="hero-logo-img" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;border:3px solid rgba(255,255,255,.4)">🏏</div>`;
   var recent=state.season.slice(-3).reverse().map(m=>`
     <div class="card" style="cursor:pointer" onclick="openDetail(${m.id})">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
@@ -284,16 +327,18 @@ function renderHome(){
         <span style="font-size:12px;color:#aaa">${fmtDate(m.matchDate)}</span>
       </div>
       <div style="font-size:13px;color:#555;margin-bottom:6px">${m.team1.name}: ${m.team1.totalRuns}/${m.team1.wickets} &nbsp;·&nbsp; ${m.team2.name}: ${m.team2.totalRuns}/${m.team2.wickets}</div>
-      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
         <span class="badge badge-done">${m.result}</span>
         ${m.motm?`<span class="badge badge-motm">🌟 ${m.motm.name}</span>`:''}
       </div>
     </div>`).join('');
   return`<div style="padding-top:6px">
     <div class="hero-card">
-      <div style="font-size:26px;margin-bottom:6px">🏏</div>
-      <div style="font-size:22px;font-weight:800;margin-bottom:3px">SJCC Score Book</div>
-      <div style="font-size:14px;opacity:.8">South Jersey Cricket Club</div>
+      ${logoHtml}
+      <div class="hero-text">
+        <div class="title">SJCC Score Book</div>
+        <div class="sub">South Jersey Cricket Club</div>
+      </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
       <button class="btn-primary btn-block" onclick="startSetup()" style="grid-column:1/-1">+ New Match</button>
@@ -301,10 +346,16 @@ function renderHome(){
       <button class="btn btn-block" onclick="showView('history')" style="${!(state.match&&state.match.status==='live')?'grid-column:1/-1':''}">📋 History (${state.season.length})</button>
     </div>
     ${state.season.length?`<div class="section-title">Recent Matches</div>${recent}`:'<p style="color:#aaa;text-align:center;margin-top:30px;font-size:14px">No matches yet. Start a new match!</p>'}
+    <div style="text-align:center;margin-top:16px">
+      <label style="font-size:12px;color:#90aad0;cursor:pointer">
+        📷 Upload Club Logo &nbsp;
+        <input type="file" accept="image/*" style="display:none" onchange="handleLogoFile(this.files[0])">
+      </label>
+    </div>
   </div>`;
 }
 
-/* HISTORY */
+// ── HISTORY ──
 function renderHistory(){
   if(!state.season.length)return`<div><button class="btn btn-sm" onclick="showView('home')" style="margin-bottom:16px">← Back</button><p style="color:#aaa;text-align:center;margin-top:40px">No completed matches yet.</p></div>`;
   var rows=state.season.map((m,i)=>`
@@ -325,7 +376,7 @@ function renderHistory(){
   return`<div><button class="btn btn-sm" onclick="showView('home')" style="margin-bottom:14px">← Back</button><div class="section-title">Season History</div>${rows}</div>`;
 }
 
-/* DETAIL */
+// ── DETAIL ──
 function openDetail(id){state.selected=state.season.find(m=>m.id===id);state.view='detail';render()}
 function renderDetail(){
   var m=state.selected;if(!m)return'';
@@ -357,17 +408,13 @@ function renderDetail(){
     <div style="margin-bottom:12px"><span class="badge badge-done" style="font-size:13px;padding:6px 14px">${m.result}</span></div>
     ${m.motm?`<div class="motm-banner" style="margin-bottom:14px">
       <div class="star">🌟</div>
-      <div class="info">
-        <div class="mtitle">Man of the Match</div>
-        <div class="mplayer">${m.motm.name}</div>
-        <div class="mteam">${m.motm.team}${m.motm.reason?' · '+m.motm.reason:''}</div>
-      </div>
+      <div class="info"><div class="mtitle">Man of the Match</div><div class="mplayer">${m.motm.name}</div><div class="mteam">${m.motm.team}${m.motm.reason?' · '+m.motm.reason:''}</div></div>
     </div>`:''}
     ${teamCards}
   </div>`;
 }
 
-/* SETUP */
+// ── SETUP ──
 function startSetup(){
   pid=0;
   state.setup={step:0,team1Name:'Team A',team2Name:'Team B',matchDate:today(),overs:20,team1Players:[],team2Players:[],tossWinner:0,tossChoice:'bat'};
@@ -463,7 +510,7 @@ function finishSetup(){
   showView('match');
 }
 
-/* MATCH */
+// ── MATCH ──
 function renderMatch(){
   var m=state.match;if(!m)return'';
   var bt=m.battingTeam===0?m.team1:m.team2;
@@ -505,12 +552,15 @@ function renderMatch(){
       <button class="btn btn-sm" onclick="showView('home')">← Home</button>
       <span class="badge badge-inn">Innings ${m.innings}</span>
       ${m.status==='live'?`<span class="badge badge-live">● LIVE</span>`:`<span class="badge badge-done">✓ Done</span>`}
-      <span style="font-size:12px;color:#aaa;margin-left:2px">${fmtDate(m.matchDate)}</span>
+      <span style="font-size:12px;color:#aaa">${fmtDate(m.matchDate)}</span>
       ${m.status==='live'?`<button class="btn btn-sm" style="margin-left:auto" onclick="openSquad()">👥 Squads</button>`:''}
     </div>
 
     <div class="card" style="text-align:center;padding:20px 16px">
-      <div style="font-size:13px;color:#7090c0;font-weight:600;margin-bottom:8px">${bt.name}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <div style="font-size:13px;color:#7090c0;font-weight:600">${bt.name}</div>
+        ${m.status==='live'?`<button class="btn btn-sm" style="font-size:12px" onclick="openOversModal()">⚙️ ${m.overs} ov</button>`:`<span style="font-size:12px;color:#aaa">${m.overs} overs</span>`}
+      </div>
       <div class="score-runs">${bt.totalRuns}<span class="score-wkts">/${bt.wickets}</span></div>
       <div class="score-info">${bt.overs}.${bt.balls%6} overs · Extras ${bt.extras}</div>
       ${target?`<div style="font-size:13px;color:var(--blue);margin-top:6px;font-weight:600">Target ${target} · Need ${Math.max(0,target-bt.totalRuns)} off ${Math.max(0,ballsLeft)} balls · RRR ${rrr}</div>`:''}
@@ -558,7 +608,23 @@ function renderMatch(){
   </div>`;
 }
 
-/* SQUAD */
+// ── CHANGE OVERS ──
+function openOversModal(){
+  document.getElementById('overs-input').value=state.match.overs;
+  document.getElementById('overs-modal').style.display='flex';
+  setTimeout(()=>document.getElementById('overs-input').focus(),100);
+}
+function closeOversModal(){document.getElementById('overs-modal').style.display='none'}
+function confirmOversChange(){
+  var val=parseInt(document.getElementById('overs-input').value);
+  if(!val||val<1)return;
+  var m=clone(state.match);
+  m.overs=val;
+  state.match=m;
+  closeOversModal();render();
+}
+
+// ── SQUAD ──
 function openSquad(){state.view='squad';render()}
 function renderSquad(){
   var m=state.match;if(!m)return'';
@@ -587,7 +653,7 @@ function renderSquad(){
   </div>`;
 }
 
-/* ADD PLAYER */
+// ── ADD PLAYER ──
 function openAddPlayer(ti){
   state.addPlayerTarget=ti;state.addPlayerRole='bat';
   document.getElementById('new-player-name').value='';
@@ -609,20 +675,18 @@ function confirmAddPlayer(){
   state.match=m;closeAddPlayer();render();
 }
 
-/* CHANGE BOWLER */
+// ── CHANGE BOWLER ──
 function openChangeBowler(){
   var m=state.match;
   var fl=m.fieldingTeam===0?m.team1:m.team2;
-  var cur=fl.currentBowler;
   document.getElementById('bowler-sel').innerHTML=fl.bowlers
-    .map((b,i)=>`<option value="${i}"${i===cur?' selected':''}>${b.name}${i===cur?' (current)':''}</option>`).join('');
+    .map((b,i)=>`<option value="${i}"${i===fl.currentBowler?' selected':''}>${b.name}${i===fl.currentBowler?' (current)':''}</option>`).join('');
   document.getElementById('bowler-modal').style.display='flex';
 }
 function openBowlerModal(m){
   var fl=m.fieldingTeam===0?m.team1:m.team2;
-  var cur=fl.currentBowler;
   document.getElementById('bowler-sel').innerHTML=fl.bowlers
-    .map((b,i)=>`<option value="${i}"${i===cur?' selected':''}>${b.name}${i===cur?' (prev)':''}</option>`).join('');
+    .map((b,i)=>`<option value="${i}"${i===fl.currentBowler?' selected':''}>${b.name}${i===fl.currentBowler?' (prev)':''}</option>`).join('');
   document.getElementById('bowler-modal').style.display='flex';
   render();
 }
@@ -634,7 +698,7 @@ function confirmBowlerChange(){
   state.match=m;render();
 }
 
-/* CHANGE BATTER */
+// ── CHANGE BATTER ──
 function openChangeBatter(){
   var m=state.match;
   var bt=m.battingTeam===0?m.team1:m.team2;
@@ -656,11 +720,10 @@ function confirmChangeBatter(){
   state.match=m;closeChangeBatter();render();
 }
 
-/* MAN OF THE MATCH */
+// ── MAN OF THE MATCH ──
 function openMotm(){
   var m=state.match;
-  var teamSel=document.getElementById('motm-team');
-  teamSel.innerHTML=`<option value="0">${m.team1.name}</option><option value="1">${m.team2.name}</option>`;
+  document.getElementById('motm-team').innerHTML=`<option value="0">${m.team1.name}</option><option value="1">${m.team2.name}</option>`;
   document.getElementById('motm-reason').value='';
   refreshMotmPlayers();
   document.getElementById('motm-modal').style.display='flex';
@@ -673,20 +736,18 @@ function refreshMotmPlayers(){
 function closeMotm(){document.getElementById('motm-modal').style.display='none'}
 function confirmMotm(){
   var ti=parseInt(document.getElementById('motm-team').value);
-  var pid2=parseInt(document.getElementById('motm-player').value);
+  var mpid=parseInt(document.getElementById('motm-player').value);
   var reason=document.getElementById('motm-reason').value.trim();
   var m=clone(state.match);
   var team=ti===0?m.team1:m.team2;
-  var player=team.players.find(p=>p.id===pid2);
-  if(!player)return;
+  var player=team.players.find(p=>p.id===mpid);if(!player)return;
   m.motm={name:player.name,team:team.name,reason};
-  // update in season too
   var si=state.season.findIndex(s=>s.id===m.id);
   if(si>=0)state.season[si].motm=m.motm;
   state.match=m;closeMotm();render();
 }
 
-/* DELIVERY */
+// ── DELIVERY ──
 var delivery={runs:0,extra:'',wicket:false};
 function openModal(){
   delivery={runs:0,extra:'',wicket:false};
