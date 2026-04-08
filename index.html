@@ -91,7 +91,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 
 <div class="header">
   <div class="header-left">
-    <img class="header-logo" id="header-logo-img" src="" alt="SJCC"/>
+    <div style="font-size:26px;line-height:1">🏏</div>
     <div class="header-titles">
       <h1>SJCC Score Book</h1>
       <span>South Jersey Cricket Club</span>
@@ -245,17 +245,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 
 <script>
 // ── Logo (embed from uploaded image) ──
-var LOGO_B64 = "";
-// Attempt to load logo from page context (user uploaded)
-(function(){
-  // We'll use a canvas trick to load any pasted img if available
-  // Otherwise fallback to emoji shield
-})();
 
-function setLogo(src){
-  var h=document.getElementById('header-logo-img');
-  if(h) h.src=src;
-}
 
 var state={view:'home',season:[],match:null,selected:null,
   setup:{step:0,team1Name:'Team A',team2Name:'Team B',matchDate:today(),overs:20,team1Players:[],team2Players:[],tossWinner:0,tossChoice:'bat'},
@@ -311,15 +301,12 @@ function render(){
   else if(state.view==='squad')a.innerHTML=renderSquad();
   a.scrollTop=0;
   // re-apply logo after render
-  if(LOGO_B64){setLogo(LOGO_B64);var hi=document.getElementById('hero-logo-img');if(hi)hi.src=LOGO_B64;}
+
 }
 
 // ── HOME ──
 function renderHome(){
-  var logoSrc=LOGO_B64||'';
-  var logoHtml=logoSrc
-    ?`<img id="hero-logo-img" class="hero-logo" src="${logoSrc}" alt="SJCC"/>`
-    :`<div id="hero-logo-img" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;border:3px solid rgba(255,255,255,.4)">🏏</div>`;
+  var logoHtml=`<div class="hero-logo" style="display:flex;align-items:center;justify-content:center;font-size:36px;background:rgba(255,255,255,.15);border:3px solid rgba(255,255,255,.4);border-radius:50%;width:64px;height:64px;flex-shrink:0">🏏</div>`;
   var recent=state.season.slice(-3).reverse().map(m=>`
     <div class="card" style="cursor:pointer" onclick="openDetail(${m.id})">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
@@ -346,12 +333,7 @@ function renderHome(){
       <button class="btn btn-block" onclick="showView('history')" style="${!(state.match&&state.match.status==='live')?'grid-column:1/-1':''}">📋 History (${state.season.length})</button>
     </div>
     ${state.season.length?`<div class="section-title">Recent Matches</div>${recent}`:'<p style="color:#aaa;text-align:center;margin-top:30px;font-size:14px">No matches yet. Start a new match!</p>'}
-    <div style="text-align:center;margin-top:16px">
-      <label style="font-size:12px;color:#90aad0;cursor:pointer">
-        📷 Upload Club Logo &nbsp;
-        <input type="file" accept="image/*" style="display:none" onchange="handleLogoFile(this.files[0])">
-      </label>
-    </div>
+
   </div>`;
 }
 
