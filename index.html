@@ -751,14 +751,18 @@ function showWicketModal() {
   for (var i = 0; i < bwt.players.length; i++) {
     fieldHtml += '<option value="' + bwt.players[i].id + '">' + bwt.players[i].name + '</option>';
   }
+  // All players (except those currently at crease) can come in — including previously out batsmen
   var avail = [];
   for (var i = 0; i < bt.players.length; i++) {
-    if (!bt.players[i].out && inBats.indexOf(bt.players[i].id) < 0) avail.push(bt.players[i]);
+    if (inBats.indexOf(bt.players[i].id) < 0) avail.push(bt.players[i]);
   }
   if (avail.length) {
-    for (var i = 0; i < avail.length; i++) nextHtml += '<option value="' + avail[i].id + '">' + avail[i].name + '</option>';
+    for (var i = 0; i < avail.length; i++) {
+      var label = avail[i].name + (avail[i].out ? ' (ret.)' : avail[i].notBatted ? '' : ' (nb)');
+      nextHtml += '<option value="' + avail[i].id + '">' + label + '</option>';
+    }
   } else {
-    nextHtml = '<option value="">— All Out —</option>';
+    nextHtml = '<option value="">— No more batsmen —</option>';
   }
   document.getElementById('wk-batsman').innerHTML = batHtml;
   document.getElementById('wk-fielder').innerHTML = fieldHtml;
@@ -788,6 +792,11 @@ function confirmWicket() {
   bs.wickets++; bs.balls++; bs.runs += xRuns;
   if (xRuns % 2 === 1) swapStrike(inn);
   if (outId === inn.striker) inn.striker = nextId || null; else inn.nonStriker = nextId || null;
+  // If the returning batsman was previously out, reset their out flag for this new innings spell
+  if (nextId) {
+    var nextP = findById(bt.players, nextId);
+    if (nextP) { nextP.out = false; nextP.notBatted = false; }
+  }
   recordBall('W' + (xRuns>0?'+'+xRuns:''), true, inn, {type:'wicket',runs:xRuns,legalDelivery:true,bowler:inn.currentBowler,striker:outId});
   inn.balls = legalCount(inn);
   closeModal('modal-wicket');
