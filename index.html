@@ -288,6 +288,17 @@ body{background:linear-gradient(135deg,#b8d4ee 0%,#daeaf7 40%,#c5ddf2 100%);min-
   </div>
 </div></div>
 
+<!-- CHANGE OVERS MID-MATCH -->
+<div class="modal-overlay" id="modal-change-overs"><div class="modal">
+  <div class="modal-title">Change Overs</div>
+  <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px" id="change-overs-desc"></p>
+  <div class="form-group"><label class="form-label">New Total Overs</label><input class="form-input" id="new-overs-val" type="number" min="1" max="50"/></div>
+  <div class="modal-actions">
+    <button class="btn btn-ghost" onclick="closeModal('modal-change-overs')">Cancel</button>
+    <button class="btn btn-blue" onclick="confirmChangeOvers()">Confirm</button>
+  </div>
+</div></div>
+
 <!-- CHANGE BOWLER -->
 <div class="modal-overlay" id="modal-change-bowl"><div class="modal">
   <div class="modal-title">Change Bowler</div>
@@ -621,6 +632,27 @@ function confirmShortRun() {
   recordBall('SR' + credited, true, inn, {type:'shortrun',runs:credited,legalDelivery:true,bowler:inn.currentBowler,striker:inn.striker});
   inn.balls = legalCount(inn);
   closeModal('modal-short'); checkOverEnd(); saveGames(); renderLive();
+}
+
+// CHANGE OVERS MID-MATCH
+function openChangeOvers() {
+  var g = getGame(), inn = g.innings[g.currentInnings];
+  document.getElementById('change-overs-desc').textContent =
+    'Current overs: ' + inn.maxOvers + '. Overs already bowled: ' + inn.overs + '. New value must be greater than overs already bowled.';
+  document.getElementById('new-overs-val').value = inn.maxOvers;
+  openModal('modal-change-overs');
+}
+function confirmChangeOvers() {
+  var g = getGame(), inn = g.innings[g.currentInnings];
+  var newOvers = parseInt(document.getElementById('new-overs-val').value);
+  if (!newOvers || newOvers <= inn.overs) {
+    alert('New overs must be greater than overs already bowled (' + inn.overs + ').');
+    return;
+  }
+  inn.maxOvers = newOvers;
+  // Also update 2nd innings if not yet started
+  if (g.currentInnings === 0 && g.innings[1]) g.innings[1].maxOvers = newOvers;
+  closeModal('modal-change-overs'); saveGames(); renderLive();
 }
 
 // CHANGE BATSMAN
@@ -1071,6 +1103,80 @@ function renderLive() {
   }
 
   var i1 = g.innings[0], i2 = g.innings[1];
+
+  function inningsScorecardHTML(inn, innNum) {
+    if (!inn) return '';
+    var bt  = g.teams[inn.battingTeam];
+    var bwt = g.teams[inn.bowlingTeam];
+    var extras = inn.extras.wides + inn.extras.noballs + inn.extras.byes + inn.extras.legbyes;
+
+    // Batting rows
+    var brows = '';
+    for (var i = 0; i < bt.players.length; i++) {
+      var p = bt.players[i];
+      if (p.notBatted && !p.out && p.id !== inn.striker && p.id !== inn.nonStriker) continue;
+      var sr = p.balls > 0 ? ((p.runs / p.balls) * 100).toFixed(0) : '-';
+      var how = p.out ? p.dismissal : (p.notBatted ? 'Did not bat' : 'Not out');
+      brows += '<tr class="' + (p.out ? 'out-row' : '') + '">'
+        + '<td style="font-weight:500">' + p.name + '</td>'
+        + '<td style="font-size:0.72rem;color:var(--muted);max-width:160px">' + how + '</td>'
+        + '<td style="text-align:center;font-family:Teko,sans-serif;font-size:1rem">' + (p.notBatted ? '-' : p.runs) + '</td>'
+        + '<td style="text-align:center">' + (p.notBatted ? '-' : p.balls) + '</td>'
+        + '<td style="text-align:center">' + (p.notBatted ? '-' : (p.fours||0)) + '</td>'
+        + '<td style="text-align:center">' + (p.notBatted ? '-' : (p.sixes||0)) + '</td>'
+        + '<td style="text-align:center;color:var(--muted);font-size:0.78rem">' + (p.notBatted ? '-' : sr) + '</td>'
+        + '</tr>';
+    }
+    // Extras + Total rows
+    brows += '<tr style="border-top:2px solid rgba(26,74,122,0.15)">'
+      + '<td colspan="2" style="font-weight:600">Extras</td>'
+      + '<td style="text-align:center;font-family:Teko,sans-serif;font-size:1rem">' + extras + '</td>'
+      + '<td colspan="4" style="font-size:0.72rem;color:var(--muted)">'
+        + 'wd ' + inn.extras.wides + '  nb ' + inn.extras.noballs + '  b ' + inn.extras.byes + '  lb ' + inn.extras.legbyes
+      + '</td></tr>';
+    brows += '<tr style="background:rgba(26,74,122,0.06)">'
+      + '<td colspan="2" style="font-weight:700;font-size:0.95rem">TOTAL</td>'
+      + '<td style="text-align:center;font-family:Teko,sans-serif;font-size:1.1rem;font-weight:700">' + inn.runs + '/' + inn.wickets + '</td>'
+      + '<td colspan="4" style="font-size:0.78rem;color:var(--muted)">' + inn.overs + '.' + inn.balls + ' ov  ·  RR: '
+        + ((inn.overs > 0 || inn.balls > 0) ? (inn.runs / (inn.overs + inn.balls/6)).toFixed(2) : '0.00')
+      + '</td></tr>';
+
+    // Bowling rows
+    var bowlRows = '';
+    for (var i = 0; i < bwt.players.length; i++) {
+      var p = bwt.players[i];
+      var b = bwt.bowlerStats[p.id];
+      if (!b || (b.overs === 0 && b.balls === 0)) continue;
+      var eco = (b.overs + b.balls/6) > 0 ? (b.runs / (b.overs + b.balls/6)).toFixed(1) : '-';
+      bowlRows += '<tr>'
+        + '<td style="font-weight:500">' + p.name + '</td>'
+        + '<td style="text-align:center">' + b.overs + '.' + b.balls + '</td>'
+        + '<td style="text-align:center">' + b.maidens + '</td>'
+        + '<td style="text-align:center">' + b.runs + '</td>'
+        + '<td style="text-align:center;font-family:Teko,sans-serif;font-weight:700">' + b.wickets + '</td>'
+        + '<td style="text-align:center;color:var(--muted)">' + eco + '</td>'
+        + '<td style="text-align:center;color:var(--muted)">' + (b.wides||0) + '</td>'
+        + '<td style="text-align:center;color:var(--muted)">' + (b.noballs||0) + '</td>'
+        + '</tr>';
+    }
+
+    return '<div style="margin-bottom:20px">'
+      + '<div style="font-family:Teko,sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--blue);text-transform:uppercase;margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid rgba(26,74,122,0.15)">'
+        + innNum + ' INNINGS — ' + bt.name
+      + '</div>'
+      + '<div style="font-size:0.7rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Batting</div>'
+      + '<div style="overflow-x:auto"><table class="score-table" style="min-width:420px">'
+        + '<thead><tr><th>Batsman</th><th>How Out</th><th>R</th><th>B</th><th>4s</th><th>6s</th><th>SR</th></tr></thead>'
+        + '<tbody>' + brows + '</tbody>'
+      + '</table></div>'
+      + '<div style="font-size:0.7rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:12px 0 4px">Bowling — ' + bwt.name + '</div>'
+      + '<div style="overflow-x:auto"><table class="score-table" style="min-width:380px">'
+        + '<thead><tr><th>Bowler</th><th>O</th><th>M</th><th>R</th><th>W</th><th>Eco</th><th>Wd</th><th>NB</th></tr></thead>'
+        + '<tbody>' + bowlRows + '</tbody>'
+      + '</table></div>'
+      + '</div>';
+  }
+
   var sum1 = i1 ? '<div class="inning-row"><div><div style="font-weight:600;font-size:0.86rem">' + g.teams[i1.battingTeam].name + '</div><div style="font-size:0.7rem;color:var(--muted)">1st innings</div></div><div style="font-family:Teko,sans-serif;font-size:1.3rem">' + i1.runs + '/' + i1.wickets + ' <span style="font-size:0.82rem;color:var(--muted)">(' + i1.overs + '.' + i1.balls + ')</span></div></div>' : '';
   var sum2 = i2 ? '<div class="inning-row"><div><div style="font-weight:600;font-size:0.86rem">' + g.teams[i2.battingTeam].name + '</div><div style="font-size:0.7rem;color:var(--muted)">2nd innings</div></div><div style="font-family:Teko,sans-serif;font-size:1.3rem">' + i2.runs + '/' + i2.wickets + ' <span style="font-size:0.82rem;color:var(--muted)">(' + i2.overs + '.' + i2.balls + ')</span></div></div>' : '';
   var momHTML = g.mom ? '<div class="mom-banner"><div style="font-size:2rem">🏆</div><div><div style="font-size:0.67rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gold)">Man of the Match</div><div style="font-family:Teko,sans-serif;font-size:1.4rem">' + g.mom.name + '</div><div style="font-size:0.76rem;color:var(--muted)">' + g.teams[g.mom.teamIdx].name + '</div></div></div>' : '';
@@ -1095,7 +1201,11 @@ function renderLive() {
         + '<button class="score-btn btn-bye"    onclick="score(\'bye\',0)"     style="padding:10px 4px">Bye</button>'
         + '<button class="score-btn btn-short"  onclick="score(\'shortrun\',0)" style="padding:10px 4px;font-size:0.76rem">Short Run</button>'
         + '<button class="score-btn btn-undo"   onclick="undoLast()"           style="padding:10px 4px">↩ Undo</button>'
-      + '</div></div>';
+      + '</div>'
+      + '<div style="margin-top:8px;text-align:right">'
+        + '<button class="btn btn-ghost btn-sm" onclick="openChangeOvers()" style="font-size:0.72rem">⚙️ Change Overs (' + inn.maxOvers + ')</button>'
+      + '</div>'
+      + '</div>';
   } else if (g.status === 'complete' && !g.mom) {
     scoreButtons = '<button class="btn btn-gold" style="margin-bottom:14px" onclick="showMOMModal()">🏆 Man of the Match</button>';
   }
@@ -1173,6 +1283,10 @@ function renderLive() {
       + sum1 + sum2
       + '<div style="margin-top:10px;font-size:0.78rem;color:var(--muted)">Toss: ' + g.toss.winner + ' chose to ' + g.toss.choice + '</div>'
       + momHTML
+      + '<div style="margin-top:16px">'
+        + inningsScorecardHTML(i1, '1ST')
+        + inningsScorecardHTML(i2, '2ND')
+      + '</div>'
     + '</div>';
 }
 
