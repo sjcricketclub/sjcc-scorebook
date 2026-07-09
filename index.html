@@ -288,6 +288,18 @@ body{background:linear-gradient(135deg,#b8d4ee 0%,#daeaf7 40%,#c5ddf2 100%);min-
   </div>
 </div></div>
 
+<!-- CHANGE TOSS DECISION -->
+<div class="modal-overlay" id="modal-change-toss"><div class="modal">
+  <div class="modal-title">Change Toss Decision</div>
+  <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px">Warning: This will swap the batting and fielding teams for the current innings. Only use before any balls are bowled.</p>
+  <div class="form-group"><label class="form-label">Toss Winner</label><select class="form-select" id="ct-winner"></select></div>
+  <div class="form-group"><label class="form-label">Elected To</label><select class="form-select" id="ct-choice"><option value="bat">Bat</option><option value="field">Field</option></select></div>
+  <div class="modal-actions">
+    <button class="btn btn-ghost" onclick="closeModal('modal-change-toss')">Cancel</button>
+    <button class="btn btn-danger" onclick="confirmChangeToss()">Apply Change</button>
+  </div>
+</div></div>
+
 <!-- CHANGE OVERS MID-MATCH -->
 <div class="modal-overlay" id="modal-change-overs"><div class="modal">
   <div class="modal-title">Change Overs</div>
@@ -634,6 +646,43 @@ function confirmShortRun() {
   closeModal('modal-short'); checkOverEnd(); saveGames(); renderLive();
 }
 
+// CHANGE TOSS DECISION
+function openChangeToss() {
+  var g = getGame();
+  var sel = document.getElementById('ct-winner');
+  sel.innerHTML = g.teams.map(function(t, i){ return '<option value="' + i + '">' + t.name + '</option>'; }).join('');
+  // Pre-select current values
+  var curWinnerIdx = g.teams[0].name === g.toss.winner ? 0 : 1;
+  sel.value = curWinnerIdx;
+  document.getElementById('ct-choice').value = g.toss.choice;
+  openModal('modal-change-toss');
+}
+function confirmChangeToss() {
+  var g = getGame();
+  var winnerIdx = parseInt(document.getElementById('ct-winner').value);
+  var choice    = document.getElementById('ct-choice').value;
+  g.toss.winner = g.teams[winnerIdx].name;
+  g.toss.choice = choice;
+  // Recalculate batting first
+  var bf = (winnerIdx === 0) ? (choice === 'bat' ? 0 : 1) : (choice === 'bat' ? 1 : 0);
+  g.battingFirst = bf;
+  // Update current innings if no deliveries yet
+  var inn = g.innings[g.currentInnings];
+  if (inn && inn.deliveries.length === 0) {
+    inn.battingTeam  = bf;
+    inn.bowlingTeam  = 1 - bf;
+    // Reset openers so they can be re-selected
+    inn.striker = null; inn.nonStriker = null; inn.currentBowler = null;
+    g.status = 'live';
+    closeModal('modal-change-toss');
+    saveGames();
+    showOpenersModal(g.currentInnings);
+  } else {
+    closeModal('modal-change-toss');
+    saveGames(); renderLive();
+  }
+}
+
 // CHANGE OVERS MID-MATCH
 function openChangeOvers() {
   var g = getGame(), inn = g.innings[g.currentInnings];
@@ -653,6 +702,13 @@ function confirmChangeOvers() {
   // Also update 2nd innings if not yet started
   if (g.currentInnings === 0 && g.innings[1]) g.innings[1].maxOvers = newOvers;
   closeModal('modal-change-overs'); saveGames(); renderLive();
+}
+
+function manualSwapStrike() {
+  var g = getGame(); if (!g) return;
+  var inn = g.innings[g.currentInnings]; if (!inn) return;
+  swapStrike(inn);
+  saveGames(); renderLive();
 }
 
 // CHANGE BATSMAN
@@ -1258,7 +1314,7 @@ function renderLive() {
     + '</div>'
     + '<div class="live-panels">'
       + '<div class="card"><div class="panel-title">At the Crease '
-        + (g.status==='live' ? '<button class="panel-edit-btn" onclick="openChangeBat()">Change</button>' : '')
+        + (g.status==='live' ? '<div style="display:flex;gap:6px"><button class="panel-edit-btn" onclick="manualSwapStrike()" title="Swap strike">⇅ Swap</button><button class="panel-edit-btn" onclick="openChangeBat()">Change</button></div>' : '')
         + '</div>' + strikerPanelHTML + '</div>'
       + '<div class="card"><div class="panel-title">Bowling '
         + (g.status==='live' ? '<button class="panel-edit-btn" onclick="openChangeBowler()">Change</button>' : '')
@@ -1281,7 +1337,9 @@ function renderLive() {
     + '</div>'
     + '<div id="tab-match" class="tab-content card">'
       + sum1 + sum2
-      + '<div style="margin-top:10px;font-size:0.78rem;color:var(--muted)">Toss: ' + g.toss.winner + ' chose to ' + g.toss.choice + '</div>'
+      + '<div style="margin-top:10px;font-size:0.78rem;color:var(--muted)">Toss: ' + g.toss.winner + ' chose to ' + g.toss.choice
+        + (g.status === 'live' ? ' &nbsp;<button class="btn btn-ghost btn-sm" onclick="openChangeToss()" style="font-size:0.7rem;padding:2px 8px">✏️ Change</button>' : '')
+      + '</div>'
       + momHTML
       + '<div style="margin-top:16px">'
         + inningsScorecardHTML(i1, '1ST')
