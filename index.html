@@ -288,6 +288,17 @@ body{background:linear-gradient(135deg,#b8d4ee 0%,#daeaf7 40%,#c5ddf2 100%);min-
   </div>
 </div></div>
 
+<!-- END INNINGS CONFIRM -->
+<div class="modal-overlay" id="modal-end-innings-confirm"><div class="modal">
+  <div class="modal-title">End Innings?</div>
+  <p style="font-size:0.9rem;color:var(--ink);margin-bottom:6px">Are you sure you want to end this innings manually?</p>
+  <p style="font-size:0.82rem;color:var(--muted)">This will close the current innings and move to the next.</p>
+  <div class="modal-actions">
+    <button class="btn btn-ghost" onclick="closeModal('modal-end-innings-confirm')">Cancel</button>
+    <button class="btn btn-danger" onclick="doEndInningsManual()">Yes, End Innings</button>
+  </div>
+</div></div>
+
 <!-- CHANGE TOSS DECISION -->
 <div class="modal-overlay" id="modal-change-toss"><div class="modal">
   <div class="modal-title">Change Toss Decision</div>
@@ -644,6 +655,32 @@ function confirmShortRun() {
   recordBall('SR' + credited, true, inn, {type:'shortrun',runs:credited,legalDelivery:true,bowler:inn.currentBowler,striker:inn.striker});
   inn.balls = legalCount(inn);
   closeModal('modal-short'); checkOverEnd(); saveGames(); renderLive();
+}
+
+function confirmEndInningsManual() {
+  openModal('modal-end-innings-confirm');
+}
+function doEndInningsManual() {
+  closeModal('modal-end-innings-confirm');
+  var g = getGame();
+  var inn = g.innings[g.currentInnings];
+  inn.complete = true;
+  if (g.currentInnings === 0) {
+    // First innings ended manually — set up second innings
+    var bt2 = 1 - inn.battingTeam, bwt2 = 1 - inn.bowlingTeam;
+    g.innings[1] = mkInnings(bt2, bwt2, g.overs);
+    document.getElementById('ei-message').textContent =
+      g.teams[inn.battingTeam].name + ' scored ' + inn.runs + '/' + inn.wickets +
+      ' in ' + inn.overs + '.' + inn.balls + ' ov. ' +
+      g.teams[bt2].name + ' need ' + (inn.runs + 1) + ' to win.';
+    popSel('ei-opener1', g.teams[bt2].players,  function(p){return p.name;}, function(p){return p.id;}, 0);
+    popSel('ei-opener2', g.teams[bt2].players,  function(p){return p.name;}, function(p){return p.id;}, 1);
+    popSel('ei-bowler',  g.teams[bwt2].players, function(p){return p.name;}, function(p){return p.id;}, 0);
+    saveGames(); openModal('modal-end-innings');
+  } else {
+    // Second innings ended manually — match is over
+    g.status = 'complete'; saveGames(); renderLive(); showMOMModal();
+  }
 }
 
 // CHANGE TOSS DECISION
@@ -1258,7 +1295,8 @@ function renderLive() {
         + '<button class="score-btn btn-short"  onclick="score(\'shortrun\',0)" style="padding:10px 4px;font-size:0.76rem">Short Run</button>'
         + '<button class="score-btn btn-undo"   onclick="undoLast()"           style="padding:10px 4px">↩ Undo</button>'
       + '</div>'
-      + '<div style="margin-top:8px;text-align:right">'
+      + '<div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center">'
+        + '<button class="btn btn-danger btn-sm" onclick="confirmEndInningsManual()" style="font-size:0.72rem">🏁 End Innings</button>'
         + '<button class="btn btn-ghost btn-sm" onclick="openChangeOvers()" style="font-size:0.72rem">⚙️ Change Overs (' + inn.maxOvers + ')</button>'
       + '</div>'
       + '</div>';
